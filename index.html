@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>au PAY 実績管理</title>
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="au実績">
+<meta name="theme-color" content="#0f172a">
+<link id="pwa-apple-icon" rel="apple-touch-icon" href="">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;background:#0f172a;color:#e2e8f0;font-family:'Hiragino Sans','Noto Sans JP',sans-serif;font-size:15px;overflow:hidden;}
+#app{display:flex;flex-direction:column;height:100%;}
+.header{background:linear-gradient(135deg,#1e1b4b,#0f172a);border-bottom:1px solid rgba(99,102,241,.25);height:54px;display:flex;align-items:center;padding:0 16px;flex-shrink:0;}
+.header-title{font-size:17px;font-weight:800;background:linear-gradient(90deg,#fbbf24,#f59e0b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.header-sub{font-size:12px;color:#64748b;margin-left:8px;}
+.content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:70px;}
+.tab-bar{position:fixed;bottom:0;left:0;right:0;height:62px;background:#1e1b4b;border-top:1px solid rgba(99,102,241,.25);display:flex;z-index:100;}
+.tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:none;background:none;color:#4b5563;font-size:10px;cursor:pointer;transition:color .15s;}
+.tab-btn.active{color:#a78bfa;}
+.tab-btn svg{width:22px;height:22px;}
+.page{display:none;padding:12px 14px;}
+.page.active{display:block;}
+.card{background:rgba(30,41,59,.85);border:1px solid rgba(99,102,241,.2);border-radius:14px;padding:14px;margin-bottom:12px;}
+.card-title{font-size:12px;font-weight:700;color:#94a3b8;letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px;}
+.bar-wrap{background:#1a2040;border-radius:6px;height:8px;overflow:hidden;width:100%;}
+.bar-fill{height:100%;border-radius:6px;transition:width .5s cubic-bezier(.4,2,.6,1);}
+/* ranking */
+.rank-row{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;margin-bottom:6px;background:rgba(15,23,42,.6);border:1px solid rgba(99,102,241,.1);}
+.rank-num{width:22px;font-size:12px;color:#64748b;text-align:center;font-weight:700;}
+.rank-name{width:38px;font-size:15px;font-weight:700;}
+.badge{font-size:12px;font-weight:700;padding:2px 7px;border-radius:6px;color:#fff;min-width:30px;text-align:center;}
+.badge-s{background:rgba(148,163,184,.3);}
+.badge-g{background:rgba(251,191,36,.3);}
+.rank-bar{flex:1;}
+.rank-total{margin-left:auto;font-size:16px;font-weight:800;color:#fbbf24;}
+.rank-emoji{font-size:16px;}
+.team-stat{display:flex;justify-content:space-around;padding:8px 0;}
+.stat-item{text-align:center;}
+.stat-val{font-size:22px;font-weight:800;color:#fbbf24;}
+.stat-label{font-size:11px;color:#64748b;margin-top:2px;}
+.mane-section{margin-bottom:14px;}
+.mane-label{font-size:13px;font-weight:700;color:#e2e8f0;margin-bottom:8px;}
+.mane-bar-info{display:flex;justify-content:space-between;margin-bottom:4px;}
+.mane-bar-text{font-size:12px;color:#94a3b8;}
+.mane-pct{font-size:14px;font-weight:700;}
+.jibun-section{border-top:1px solid rgba(99,102,241,.2);padding-top:12px;margin-top:4px;}
+.jibun-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(99,102,241,.1);}
+.jibun-row:last-child{border-bottom:none;}
+.jibun-name{flex:1;font-size:14px;}
+.jibun-cnt{font-size:14px;font-weight:700;color:#a78bfa;}
+/* input */
+.inp-row{display:flex;gap:8px;margin-bottom:10px;align-items:flex-end;}
+.inp-group{flex:1;}
+.inp-label{font-size:12px;color:#94a3b8;margin-bottom:4px;display:block;}
+.inp-select{width:100%;padding:10px 12px;border-radius:10px;background:#0f172a;border:1px solid #334155;color:#e2e8f0;font-size:14px;}
+.inp-num{width:100%;padding:10px 8px;border-radius:10px;background:#0f172a;border:1px solid #334155;color:#e2e8f0;font-size:14px;text-align:center;}
+.inp-select:focus,.inp-num:focus{outline:none;border-color:#6366f1;}
+.btn{width:100%;padding:12px;border-radius:10px;border:none;cursor:pointer;font-size:14px;font-weight:700;color:#fff;transition:opacity .2s;}
+.btn:active{opacity:.8;}
+.btn-primary{background:linear-gradient(135deg,#4f46e5,#7c3aed);}
+.btn-save{background:linear-gradient(135deg,#16a34a,#059669);font-size:16px;padding:14px;}
+.btn-reset{background:transparent;border:1px solid #334155;color:#64748b;margin-top:6px;}
+.mane-info-box{background:rgba(8,145,178,.1);border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:12px;color:#94a3b8;line-height:1.8;}
+/* log */
+.log-block{border-bottom:1px solid rgba(99,102,241,.1);padding:9px 0;}
+.log-block:last-child{border-bottom:none;}
+.log-header{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+.log-date{font-size:12px;color:#64748b;width:44px;flex-shrink:0;}
+.log-type{font-size:11px;padding:2px 7px;border-radius:6px;font-weight:700;flex-shrink:0;}
+.lt-card{background:rgba(251,191,36,.2);color:#fbbf24;}
+.lt-mane{background:rgba(8,145,178,.2);color:#38bdf8;}
+.log-del{background:none;border:none;color:#ef4444;font-size:18px;cursor:pointer;padding:0 4px;margin-left:auto;flex-shrink:0;}
+.log-lines{padding-left:52px;}
+.log-line{font-size:13px;color:#e2e8f0;padding:2px 0;}
+/* LINE */
+.line-preview{width:100%;min-height:280px;background:#0f172a;border:1px solid #334155;border-radius:10px;color:#e2e8f0;font-size:12px;padding:12px;resize:vertical;font-family:monospace;line-height:1.7;}
+.copy-btn{width:100%;padding:14px;border-radius:12px;border:none;cursor:pointer;font-size:15px;font-weight:700;color:#fff;margin-bottom:8px;transition:background .3s;}
+.copy-btn.idle{background:linear-gradient(135deg,#0891b2,#0e7490);}
+.copy-btn.done{background:linear-gradient(135deg,#16a34a,#15803d);}
+/* progress */
+.prog-month-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.prog-month-btn{font-size:16px;font-weight:700;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.3);color:#e2e8f0;padding:8px 16px;border-radius:10px;cursor:pointer;}
+.prog-nav-btn{background:none;border:1px solid #334155;color:#94a3b8;width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;}
+.prog-staff-select{width:100%;padding:10px 12px;border-radius:10px;background:#0f172a;border:1px solid #334155;color:#e2e8f0;font-size:14px;margin-bottom:12px;}
+.prog-empty{text-align:center;color:#4b5563;font-size:14px;padding:24px;}
+.ana-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(99,102,241,.1);}
+.ana-row:last-child{border-bottom:none;}
+.ana-label{font-size:13px;color:#94a3b8;}
+.ana-val{font-size:14px;font-weight:700;}
+.pace-box{background:rgba(99,102,241,.1);border-radius:10px;padding:12px;margin-bottom:4px;}
+.pace-title{font-size:12px;color:#94a3b8;margin-bottom:6px;font-weight:700;}
+.pace-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;}
+.pace-key{font-size:13px;color:#94a3b8;}
+.pace-pred{font-size:14px;font-weight:700;color:#a78bfa;}
+/* year calendar */
+.ycal-bg{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:300;display:flex;align-items:center;justify-content:center;}
+.ycal{background:#1e293b;border-radius:16px;padding:20px 16px;width:calc(100% - 32px);max-width:360px;}
+.ycal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.ycal-year{font-size:18px;font-weight:700;}
+.ycal-nav{background:none;border:1px solid #334155;color:#94a3b8;width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:16px;}
+.ycal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.ycal-month{padding:12px 6px;text-align:center;border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;background:rgba(15,23,42,.6);border:1px solid rgba(99,102,241,.1);transition:all .15s;}
+.ycal-month.active{background:linear-gradient(135deg,#4f46e5,#7c3aed);border-color:transparent;color:#fff;}
+.ycal-close-btn{width:100%;margin-top:14px;padding:12px;border-radius:10px;border:none;background:#334155;color:#e2e8f0;font-size:14px;font-weight:700;cursor:pointer;}
+/* settings */
+.set-row{display:flex;align-items:center;padding:12px 0;border-bottom:1px solid rgba(99,102,241,.1);}
+.set-row:last-child{border-bottom:none;}
+.set-label{flex:1;font-size:14px;}
+.set-input{width:80px;padding:8px 10px;border-radius:8px;background:#0f172a;border:1px solid #334155;color:#e2e8f0;font-size:14px;text-align:right;}
+.set-input:focus{outline:none;border-color:#6366f1;}
+/* toast */
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);padding:12px 24px;border-radius:30px;font-size:14px;font-weight:700;color:#fff;z-index:999;pointer-events:none;white-space:nowrap;}
+/* 日付ナビ（AI・LINE共通） */
+.date-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.25);border-radius:12px;padding:10px 14px;}
+.date-nav-btn{background:none;border:1px solid rgba(99,102,241,.3);color:#a78bfa;width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;}
+.date-nav-label{font-size:15px;font-weight:700;color:#e2e8f0;cursor:pointer;text-align:center;}
+.date-nav-label small{display:block;font-size:10px;color:#64748b;font-weight:400;margin-top:1px;}
+/* 日付カレンダーモーダル */
+.dcal-bg{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:400;display:flex;align-items:center;justify-content:center;}
+.dcal{background:#1e293b;border-radius:16px;padding:20px 16px;width:calc(100% - 32px);max-width:340px;}
+.dcal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
+.dcal-nav{background:none;border:1px solid #334155;color:#94a3b8;width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:16px;}
+.dcal-month-label{font-size:16px;font-weight:700;}
+.dcal-dow-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin:10px 0 4px;}
+.dcal-dow{text-align:center;font-size:11px;color:#4b5563;padding:3px 0;font-weight:600;}
+.dcal-day-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+.dcal-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:13px;cursor:pointer;color:#e2e8f0;}
+.dcal-day.other{color:#334155;}
+.dcal-day.selected{background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;font-weight:700;}
+.dcal-day.today-mark{border:1px solid #6366f1;}
+.dcal-day:active{background:rgba(99,102,241,.3);}
+.dcal-close{width:100%;margin-top:14px;padding:11px;border-radius:10px;border:none;background:#334155;color:#e2e8f0;font-size:14px;font-weight:700;cursor:pointer;}
+/* AI分析 */
+.ai-section-title{font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;}
+.mvp-card{background:linear-gradient(135deg,rgba(251,191,36,.15),rgba(245,158,11,.08));border:1px solid rgba(251,191,36,.3);border-radius:14px;padding:16px;margin-bottom:12px;}
+.mvp-crown{font-size:32px;text-align:center;margin-bottom:6px;}
+.mvp-name{font-size:22px;font-weight:800;text-align:center;color:#fbbf24;margin-bottom:4px;}
+.mvp-score{font-size:13px;text-align:center;color:#94a3b8;margin-bottom:10px;}
+.mvp-comment{font-size:13px;color:#e2e8f0;line-height:1.7;background:rgba(0,0,0,.2);border-radius:8px;padding:10px 12px;}
+.ai-stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px;}
+.ai-stat-item{background:rgba(15,23,42,.6);border:1px solid rgba(99,102,241,.15);border-radius:10px;padding:10px 12px;text-align:center;}
+.ai-stat-val{font-size:18px;font-weight:800;color:#a78bfa;}
+.ai-stat-label{font-size:11px;color:#64748b;margin-top:2px;}
+.ai-member-card{background:rgba(15,23,42,.6);border:1px solid rgba(99,102,241,.15);border-radius:12px;padding:12px 14px;margin-bottom:8px;}
+.ai-member-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.ai-member-name{font-size:15px;font-weight:700;}
+.ai-member-rank{font-size:12px;color:#64748b;}
+.ai-member-stats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
+.ai-member-badge{font-size:11px;padding:3px 8px;border-radius:6px;font-weight:600;}
+.ai-comment{font-size:12px;color:#94a3b8;line-height:1.6;border-top:1px solid rgba(99,102,241,.1);padding-top:8px;}
+.improve-item{display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid rgba(99,102,241,.1);}
+.improve-item:last-child{border-bottom:none;}
+.improve-icon{font-size:18px;flex-shrink:0;margin-top:1px;}
+.improve-text{font-size:13px;color:#e2e8f0;line-height:1.6;}
+.game-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(99,102,241,.1);}
+.game-item:last-child{border-bottom:none;}
+.game-icon{font-size:20px;width:32px;text-align:center;flex-shrink:0;}
+.game-content{flex:1;}
+.game-label{font-size:11px;color:#64748b;font-weight:600;letter-spacing:.05em;}
+.game-val{font-size:14px;font-weight:700;color:#e2e8f0;margin-top:2px;}
+.ai-copy-btn{width:100%;padding:13px;border-radius:10px;border:none;cursor:pointer;font-size:14px;font-weight:700;color:#fff;background:linear-gradient(135deg,#06c755,#05a047);margin-top:4px;}
+.ai-copy-btn:active{opacity:.8;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <span class="header-title">🏆 au PAY 実績管理</span>
+    <span class="header-sub" id="hdr-month"></span>
+  </div>
+  <div class="content" id="content">
+    <div class="page active" id="page-ranking"></div>
+    <div class="page" id="page-input"></div>
+    <div class="page" id="page-progress"></div>
+    <div class="page" id="page-copy"></div>
+    <div class="page" id="page-ai"></div>
+    <div class="page" id="page-settings"></div>
+  </div>
+  <div class="tab-bar">
+    <button class="tab-btn active" data-tab="ranking" onclick="switchTab('ranking')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+      ランキング
+    </button>
+    <button class="tab-btn" data-tab="input" onclick="switchTab('input')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+      入力
+    </button>
+    <button class="tab-btn" data-tab="progress" onclick="switchTab('progress')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      進捗
+    </button>
+    <button class="tab-btn" data-tab="ai" onclick="switchTab('ai')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg>
+      AI分析
+    </button>
+    <button class="tab-btn" data-tab="copy" onclick="switchTab('copy')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5C21 16.75 16.25 21 12 21c-1.5 0-3.5-.5-5-1.5L3 21l1.5-4C3.5 15.5 3 13.5 3 11.5 3 6.25 7.75 2 12 2s9 4.25 9 9.5z"/></svg>
+      LINE
+    </button>
+    <button class="tab-btn" data-tab="settings" onclick="switchTab('settings')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      設定
+    </button>
+  </div>
+</div>
+
+<script>
+// ══ PWA セットアップ ══
+(function setupPWA(){
+  function genIcon(size){
+    try{
+      const c=document.createElement('canvas');
+      c.width=size;c.height=size;
+      const ctx=c.getContext('2d');
+      const g=ctx.createLinearGradient(0,0,size,size);
+      g.addColorStop(0,'#1e1b4b');g.addColorStop(1,'#0f172a');
+      const r=size*0.22;
+      ctx.fillStyle=g;
+      ctx.beginPath();
+      ctx.moveTo(r,0);ctx.lineTo(size-r,0);ctx.quadraticCurveTo(size,0,size,r);
+      ctx.lineTo(size,size-r);ctx.quadraticCurveTo(size,size,size-r,size);
+      ctx.lineTo(r,size);ctx.quadraticCurveTo(0,size,0,size-r);
+      ctx.lineTo(0,r);ctx.quadraticCurveTo(0,0,r,0);ctx.closePath();ctx.fill();
+      // 🏆 トロフィー型アイコン
+      ctx.fillStyle='#fbbf24';
+      const s=size*0.28;
+      ctx.font=`bold ${s}px Arial`;
+      ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText('au',size/2,size*0.42);
+      ctx.fillStyle='#a78bfa';
+      ctx.font=`bold ${s*0.55}px Arial`;
+      ctx.fillText('PAY',size/2,size*0.68);
+      return c.toDataURL('image/png');
+    }catch(e){return '';}
+  }
+  const icon192=genIcon(192),icon512=genIcon(512);
+  const manifest={name:'au PAY 実績管理',short_name:'au実績',start_url:'.',display:'standalone',background_color:'#0f172a',theme_color:'#0f172a',icons:[{src:icon192,sizes:'192x192',type:'image/png'},{src:icon512,sizes:'512x512',type:'image/png'}].filter(i=>i.src)};
+  try{
+    const mBlob=new Blob([JSON.stringify(manifest)],{type:'application/json'});
+    const mURL=URL.createObjectURL(mBlob);
+    const mLink=document.createElement('link');mLink.rel='manifest';mLink.href=mURL;
+    document.head.appendChild(mLink);
+    if(icon192){document.getElementById('pwa-apple-icon').href=icon192;}
+  }catch(e){}
+  if('serviceWorker' in navigator){
+    const swCode=`const C='aupay-sw-v1';self.addEventListener('install',e=>{self.skipWaiting();});self.addEventListener('activate',e=>{self.clients.claim();});self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(nr=>{return caches.open(C).then(cache=>{try{cache.put(e.request,nr.clone());}catch(x){}return nr;});}).catch(()=>r)));});`;
+    try{const swB=new Blob([swCode],{type:'application/javascript'});navigator.serviceWorker.register(URL.createObjectURL(swB)).catch(()=>{});}catch(e){}
+  }
+})();
+
+const MONTHS_JP=["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"];
+const SK='aupay_v2', SK_TARGET='aupay_targets', SK_MEMBERS='aupay_members';
+
+function loadMembers(){
+  try{return JSON.parse(localStorage.getItem(SK_MEMBERS)||'null')||["倉谷","藤生","林","飯島","星野","ヒガ","工藤","青木"];}
+  catch{return ["倉谷","藤生","林","飯島","星野","ヒガ","工藤","青木"];}
+}
+function saveMembers(m){localStorage.setItem(SK_MEMBERS,JSON.stringify(m));}
+let MEMBERS=loadMembers();
+
+function todayStr(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function monthKey(y,m){return `${y}-${String(m+1).padStart(2,'0')}`;}
+function daysInMonth(y,m){return new Date(y,m+1,0).getDate();}
+function loadDB(){try{return JSON.parse(localStorage.getItem(SK)||'{}')}catch{return {}}}
+function saveDB(db){localStorage.setItem(SK,JSON.stringify(db));}
+function loadTargets(){
+  try{
+    const t=JSON.parse(localStorage.getItem(SK_TARGET)||'null')||{jibun:25};
+    if(!t.personalGold) t.personalGold={};
+    MEMBERS.forEach(m=>{ if(t.personalGold[m]===undefined) t.personalGold[m]=5; });
+    return t;
+  }catch{return{jibun:25,personalGold:{}};}
+}
+function saveTargets(t){localStorage.setItem(SK_TARGET,JSON.stringify(t));}
+
+function getMonthData(db,y,m){
+  const k=monthKey(y,m);
+  if(!db[k]) db[k]={cards:{},jibun:{},mane:{}};
+  const d=db[k];
+  MEMBERS.forEach(n=>{
+    if(!d.cards[n]) d.cards[n]={silver:0,gold:0};
+    if(d.jibun[n]===undefined) d.jibun[n]=0;
+    if(!d.mane[n]) d.mane[n]={kishu_target:0,kishu_got:0,sellup_target:0,sellup_got:0};
+  });
+  return d;
+}
+
+function getEntries(db){return db.entries||[];}
+function addEntry(db,e){
+  if(!db.entries) db.entries=[];
+  db.entries.push({...e,id:Date.now()+'_'+Math.random().toString(36).slice(2)});
+}
+// ③ IDなし旧データも含めて削除できるようインデックスベースに
+function deleteEntryById(db,id){
+  if(!db.entries) return;
+  db.entries=db.entries.filter(e=>e.id!==id);
+}
+
+const now=new Date();
+let currentTab='ranking';
+let progYear=now.getFullYear(),progMonth=now.getMonth(),progMember=MEMBERS[0];
+let ycalYear=now.getFullYear();
+let copyDone=false;
+let sharedMember=MEMBERS[0];
+
+// AI・LINE共通 日付選択ステート
+let aiDate=todayStr();
+let lineDate=todayStr();
+let dcalTarget=null; // 'ai' | 'line'
+let dcalYear=now.getFullYear();
+let dcalMonth=now.getMonth();
+
+// ══ 日付カレンダー共通ロジック ══
+function dateToLabel(dateStr){
+  const d=new Date(dateStr+'T00:00:00');
+  const dows=['日','月','火','水','木','金','土'];
+  const isToday=dateStr===todayStr();
+  return {
+    main:`${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日（${dows[d.getDay()]}）`,
+    sub: isToday?'今日':''
+  };
+}
+
+function openDCal(target){
+  dcalTarget=target;
+  const cur=target==='ai'?aiDate:lineDate;
+  const[y,m]=cur.split('-').map(Number);
+  dcalYear=y;dcalMonth=m-1;
+  renderDCal();
+}
+function closeDCal(){const el=document.getElementById('dcal-overlay');if(el)el.remove();}
+
+function renderDCal(){
+  const old=document.getElementById('dcal-overlay');if(old)old.remove();
+  const cur=dcalTarget==='ai'?aiDate:lineDate;
+  const dows=['日','月','火','水','木','金','土'];
+  const firstDay=new Date(dcalYear,dcalMonth,1).getDay();
+  const days=new Date(dcalYear,dcalMonth+1,0).getDate();
+  const prevDays=new Date(dcalYear,dcalMonth,0).getDate();
+  const today=todayStr();
+  let cells='';
+  for(let i=firstDay-1;i>=0;i--) cells+=`<div class="dcal-day other">${prevDays-i}</div>`;
+  for(let d=1;d<=days;d++){
+    const dk=`${dcalYear}-${String(dcalMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isSel=dk===cur,isToday=dk===today;
+    cells+=`<div class="dcal-day${isSel?' selected':''}${isToday&&!isSel?' today-mark':''}" onclick="selectDCalDate('${dk}')">${d}</div>`;
+  }
+  const total=Math.ceil((firstDay+days)/7)*7;
+  for(let i=1;i<=total-firstDay-days;i++) cells+=`<div class="dcal-day other">${i}</div>`;
+
+  const el=document.createElement('div');
+  el.id='dcal-overlay';el.className='dcal-bg';
+  el.innerHTML=`<div class="dcal">
+    <div class="dcal-header">
+      <button class="dcal-nav" onclick="dcalYear*=1;dcalMonth--;if(dcalMonth<0){dcalMonth=11;dcalYear--;}renderDCal()">‹</button>
+      <span class="dcal-month-label">${dcalYear}年 ${MONTHS_JP[dcalMonth]}</span>
+      <button class="dcal-nav" onclick="dcalYear*=1;dcalMonth++;if(dcalMonth>11){dcalMonth=0;dcalYear++;}renderDCal()">›</button>
+    </div>
+    <div class="dcal-dow-grid">${dows.map(d=>`<div class="dcal-dow">${d}</div>`).join('')}</div>
+    <div class="dcal-day-grid">${cells}</div>
+    <button class="dcal-close" onclick="closeDCal()">閉じる</button>
+  </div>`;
+  document.body.appendChild(el);
+}
+
+function selectDCalDate(dk){
+  if(dcalTarget==='ai'){aiDate=dk;closeDCal();renderAI();}
+  else if(dcalTarget==='line'){lineDate=dk;closeDCal();renderCopy();}
+}
+
+function switchTab(tab){
+  currentTab=tab;
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+  document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===`page-${tab}`));
+  document.getElementById('content').scrollTop=0;
+  ({ranking:renderRanking,input:renderInput,progress:renderProgress,copy:renderCopy,ai:renderAI,settings:renderSettings})[tab]?.();
+}
+function updateHeader(){document.getElementById('hdr-month').textContent=`${now.getFullYear()}年${now.getMonth()+1}月`;}
+function getEmoji(g,norma){
+  const n=norma||5;
+  if(g>=n) return '🔥';
+  if(g>=Math.ceil(n*0.8)) return '✨';
+  if(g>=Math.ceil(n*0.6)) return '👍';
+  return '➖';
+}
+function maneBarHTML(got,target){
+  const pct=target===0?0:Math.min(100,Math.round(got/target*100));
+  const c=pct>=50?'#4ade80':pct>=30?'#facc15':'#f87171';
+  return `<div class="mane-bar-info"><span class="mane-bar-text">対象${target}件→マネ活${got}件</span><span class="mane-pct" style="color:${c}">${pct}%</span></div>
+  <div class="bar-wrap"><div class="bar-fill" style="width:${pct}%;background:${c}"></div></div>`;
+}
+
+// ══ RANKING ══
+function renderRanking(){
+  const db=loadDB(),targets=loadTargets();
+  const md=getMonthData(db,now.getFullYear(),now.getMonth());
+  const ranked=MEMBERS.map(n=>({name:n,silver:md.cards[n].silver||0,gold:md.cards[n].gold||0,jibun:md.jibun[n]||0})).sort((a,b)=>b.gold-a.gold||(b.silver-a.silver));
+  const maxG=Math.max(...ranked.map(r=>r.gold),1);
+  const teamS=ranked.reduce((s,r)=>s+r.silver,0),teamG=ranked.reduce((s,r)=>s+r.gold,0),teamJ=ranked.reduce((s,r)=>s+r.jibun,0);
+  const kTarget=MEMBERS.reduce((s,n)=>s+(md.mane[n].kishu_target||0),0);
+  const kGot=MEMBERS.reduce((s,n)=>s+(md.mane[n].kishu_got||0),0);
+  const sTarget=MEMBERS.reduce((s,n)=>s+(md.mane[n].sellup_target||0),0);
+  const sGot=MEMBERS.reduce((s,n)=>s+(md.mane[n].sellup_got||0),0);
+  const jT=targets.jibun||25,jPct=jT>0?Math.min(100,Math.round(teamJ/jT*100)):0;
+  const jC=jPct>=50?'#4ade80':jPct>=30?'#facc15':'#f87171';
+  const rankRows=ranked.map((r,i)=>{
+    const prev=i>0?ranked[i-1].gold:-1;
+    const rn=(i>0&&r.gold===prev)?'　':`${i+1}`;
+    const norma=loadTargets().personalGold?.[r.name]||5;
+    return `<div class="rank-row"><span class="rank-num">${rn}</span><span class="rank-name">${r.name}</span><span class="badge badge-s">🥈${r.silver}</span><span class="badge badge-g">🥇${r.gold}</span><div class="rank-bar"><div class="bar-wrap"><div class="bar-fill" style="width:${Math.round(r.gold/maxG*100)}%;background:linear-gradient(90deg,#4f46e5,#7c3aed)"></div></div></div><span class="rank-total">${r.gold}</span><span class="rank-emoji">${getEmoji(r.gold,norma)}</span></div>`;
+  }).join('');
+  const jibunRows=ranked.filter(r=>r.jibun>0).map(r=>`<div class="jibun-row"><span class="jibun-name">${r.name}</span><span class="jibun-cnt">${r.jibun}件</span></div>`).join('')||'<div style="font-size:13px;color:#4b5563;padding:8px 0">まだ獲得なし</div>';
+  document.getElementById('page-ranking').innerHTML=`
+    <div class="card"><div class="card-title">🥇 ゴールド獲得ランキング</div>${rankRows}<div style="font-size:11px;color:#4b5563;margin-top:6px">🔥3枚以上 ✨2枚 👍1枚 ➖0枚　※ゴールド順</div></div>
+    <div class="card"><div class="card-title">📊 チーム合計</div><div class="team-stat"><div class="stat-item"><div class="stat-val">${teamS}</div><div class="stat-label">🥈シルバー</div></div><div class="stat-item"><div class="stat-val">${teamG}</div><div class="stat-label">🥇ゴールド</div></div><div class="stat-item"><div class="stat-val" style="color:#a78bfa">${teamS+teamG}</div><div class="stat-label">🎯TOTAL</div></div></div></div>
+    <div class="card"><div class="card-title">🏦 じぶん銀行 チーム目標</div><div class="mane-bar-info" style="margin-bottom:4px"><span class="mane-bar-text">チーム合計 ${teamJ}件 / 目標 ${jT}件</span><span class="mane-pct" style="color:${jC}">${jPct}%</span></div><div class="bar-wrap" style="margin-bottom:10px"><div class="bar-fill" style="width:${jPct}%;background:${jC}"></div></div><div class="jibun-section">${jibunRows}</div></div>
+    <div class="card"><div class="card-title">💳 マネ活プラン</div><div class="mane-section"><div class="mane-label">🔄 機種変更</div>${maneBarHTML(kGot,kTarget)}</div><div class="mane-section"><div class="mane-label">⬆️ セルアップ</div>${maneBarHTML(sGot,sTarget)}</div><div style="border-top:1px solid rgba(99,102,241,.2);padding-top:12px"><div class="mane-label">📌 合算</div>${maneBarHTML(kGot+sGot,kTarget+sTarget)}</div></div>
+    <div style="height:8px"></div>`;
+}
+
+// ══ INPUT ②保存ボタン1つ ══
+let inputDate=todayStr();
+function renderInput(){
+  const db=loadDB();
+  const md=getMonthData(db,now.getFullYear(),now.getMonth());
+  const cur=md.mane[sharedMember];
+  document.getElementById('page-input').innerHTML=`
+    <div class="card">
+      <div class="card-title">👤 スタッフ & 日付（共通）</div>
+      <select class="inp-select" id="shared-member" onchange="onSharedMemberChange(this.value)" style="margin-bottom:10px">
+        ${MEMBERS.map(m=>`<option value="${m}" ${m===sharedMember?'selected':''}>${m}</option>`).join('')}
+      </select>
+      <div class="inp-row" style="margin-bottom:0">
+        <div class="inp-group">
+          <span class="inp-label">📅 日付</span>
+          <input type="date" class="inp-select" id="inp-date" value="${inputDate}" onchange="inputDate=this.value">
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">🥈🥇 カード & じぶん銀行</div>
+      <div class="inp-row">
+        <div class="inp-group"><span class="inp-label">🥈 シルバー（追加枚数）</span><input type="number" class="inp-num" id="inp-silver" value="0" min="0" inputmode="numeric"></div>
+        <div class="inp-group"><span class="inp-label">🥇 ゴールド（追加枚数）</span><input type="number" class="inp-num" id="inp-gold" value="0" min="0" inputmode="numeric"></div>
+      </div>
+      <div class="inp-row">
+        <div class="inp-group"><span class="inp-label">🏦 じぶん銀行（追加件数）</span><input type="number" class="inp-num" id="inp-jibun" value="0" min="0" inputmode="numeric"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">💳 マネ活プラン</div>
+      <div class="mane-info-box" id="mane-info-box">📌 ${sharedMember} の今月累計<br>機種変更：対象 ${cur.kishu_target}件 / マネ活 ${cur.kishu_got}件<br>セルアップ：対象 ${cur.sellup_target}件 / マネ活 ${cur.sellup_got}件</div>
+      <div class="mane-label" style="font-size:13px;font-weight:700;color:#e2e8f0;margin-bottom:8px">🔄 機種変更（今回追加）</div>
+      <div class="inp-row">
+        <div class="inp-group"><span class="inp-label">対象件数</span><input type="number" class="inp-num" id="inp-kt" value="0" min="0" inputmode="numeric"></div>
+        <div class="inp-group"><span class="inp-label">マネ活件数</span><input type="number" class="inp-num" id="inp-kg" value="0" min="0" inputmode="numeric"></div>
+      </div>
+      <div class="mane-label" style="font-size:13px;font-weight:700;color:#e2e8f0;margin-bottom:8px">⬆️ セルアップ（今回追加）</div>
+      <div class="inp-row">
+        <div class="inp-group"><span class="inp-label">対象件数</span><input type="number" class="inp-num" id="inp-st" value="0" min="0" inputmode="numeric"></div>
+        <div class="inp-group"><span class="inp-label">マネ活件数</span><input type="number" class="inp-num" id="inp-sg" value="0" min="0" inputmode="numeric"></div>
+      </div>
+    </div>
+    <button class="btn btn-save" onclick="saveAll()">✅ まとめて保存</button>
+    <div style="height:16px"></div>`;
+}
+
+function onSharedMemberChange(val){
+  sharedMember=val;
+  const db=loadDB(),md=getMonthData(db,now.getFullYear(),now.getMonth()),cur=md.mane[val];
+  const box=document.getElementById('mane-info-box');
+  if(box) box.innerHTML=`📌 ${val} の今月累計<br>機種変更：対象 ${cur.kishu_target}件 / マネ活 ${cur.kishu_got}件<br>セルアップ：対象 ${cur.sellup_target}件 / マネ活 ${cur.sellup_got}件`;
+}
+
+function getNum(id){const e=document.getElementById(id);return e?Math.max(0,parseInt(e.value)||0):0;}
+
+// ②まとめて保存
+function saveAll(){
+  const dateVal=document.getElementById('inp-date')?.value||inputDate;
+  inputDate=dateVal;
+  const s=getNum('inp-silver'),g=getNum('inp-gold'),j=getNum('inp-jibun');
+  const kt=getNum('inp-kt'),kg=getNum('inp-kg'),st=getNum('inp-st'),sg=getNum('inp-sg');
+  const hasCard=s>0||g>0||j>0;
+  const hasMane=kt>0||kg>0||st>0||sg>0;
+  if(!hasCard&&!hasMane){showToast('数字を入力してください','#ef4444');return;}
+  // 選択日付の年月を取得
+  const[dy,dm,dd]=dateVal.split('-').map(Number);
+  const db=loadDB(),md=getMonthData(db,dy,dm-1);
+  if(hasCard){
+    md.cards[sharedMember].silver+=s;
+    md.cards[sharedMember].gold+=g;
+    md.jibun[sharedMember]+=j;
+    const details=[];
+    if(s>0) details.push(`S${s}枚`);
+    if(g>0) details.push(`G${g}枚`);
+    if(j>0) details.push(`じぶん銀行${j}件`);
+    addEntry(db,{date:dateVal,member:sharedMember,type:'card',detail:details.join(' / ')});
+  }
+  if(hasMane){
+    md.mane[sharedMember].kishu_target+=kt;
+    md.mane[sharedMember].kishu_got+=kg;
+    md.mane[sharedMember].sellup_target+=st;
+    md.mane[sharedMember].sellup_got+=sg;
+    if(kt>0||kg>0) addEntry(db,{date:dateVal,member:sharedMember,type:'mane',detail:`🔄 機種変更　対象${kt}件 / マネ活${kg}件`});
+    if(st>0||sg>0) addEntry(db,{date:dateVal,member:sharedMember,type:'mane',detail:`⬆️ セルアップ　対象${st}件 / マネ活${sg}件`});
+  }
+  saveDB(db);
+  const[,dm2,dd2]=dateVal.split('-').map(Number);
+  showToast(`${dm2}/${dd2} ${sharedMember} を保存しました ✓`,'#16a34a');
+  renderInput();
+}
+
+// ══ PROGRESS ══
+function renderProgress(){
+  const db=loadDB(),entries=getEntries(db),mk=monthKey(progYear,progMonth);
+  const md=getMonthData(db,progYear,progMonth);
+  const filtered=entries.filter(e=>e.date&&e.date.substring(0,7)===mk&&e.member===progMember).sort((a,b)=>b.date.localeCompare(a.date));
+  const memberCards=md.cards[progMember]||{silver:0,gold:0};
+  const memberJibun=md.jibun[progMember]||0;
+  const memberMane=md.mane[progMember]||{kishu_target:0,kishu_got:0,sellup_target:0,sellup_got:0};
+  const memberTotal=memberCards.silver+memberCards.gold;
+  const teamG=MEMBERS.reduce((s,n)=>s+(md.cards[n].gold||0),0);
+  const teamS=MEMBERS.reduce((s,n)=>s+(md.cards[n].silver||0),0);
+  const teamTotal=teamG+teamS,teamJ=MEMBERS.reduce((s,n)=>s+(md.jibun[n]||0),0);
+  const kTarget=MEMBERS.reduce((s,n)=>s+(md.mane[n].kishu_target||0),0);
+  const kGot=MEMBERS.reduce((s,n)=>s+(md.mane[n].kishu_got||0),0);
+  const sTarget=MEMBERS.reduce((s,n)=>s+(md.mane[n].sellup_target||0),0);
+  const sGot=MEMBERS.reduce((s,n)=>s+(md.mane[n].sellup_got||0),0);
+  const maneTotal=memberMane.kishu_got+memberMane.sellup_got;
+  const maneTargetTotal=memberMane.kishu_target+memberMane.sellup_target;
+  const manePct=maneTargetTotal>0?Math.round(maneTotal/maneTargetTotal*100):0;
+  const rankData=MEMBERS.map(n=>({name:n,gold:md.cards[n].gold||0})).sort((a,b)=>b.gold-a.gold);
+  const myRankIdx=rankData.findIndex(r=>r.name===progMember);
+  const myRank=myRankIdx+1;
+  const above=myRankIdx>0?rankData[myRankIdx-1]:null;
+  const diffAbove=above?above.gold-(md.cards[progMember].gold||0):0;
+  const contribCard=teamTotal>0?Math.round(memberTotal/teamTotal*100):0;
+  const contribJ=teamJ>0?Math.round(memberJibun/teamJ*100):0;
+  const contribMane=(kGot+sGot)>0?Math.round(maneTotal/(kGot+sGot)*100):0;
+  const isCurrentMonth=progYear===now.getFullYear()&&progMonth===now.getMonth();
+  const totalDays=daysInMonth(progYear,progMonth);
+  const elapsedDays=isCurrentMonth?now.getDate():totalDays;
+  const remaining=totalDays-elapsedDays;
+  function predict(val){return elapsedDays>0?Math.round(val/elapsedDays*totalDays):val;}
+
+  // ①ログを別行で表示
+  const logRows=filtered.length?filtered.map(e=>{
+    const d=new Date(e.date+'T00:00:00');
+    const label=`${d.getMonth()+1}/${d.getDate()}`;
+    const tc=e.type==='card'?'lt-card':'lt-mane';
+    const tl=e.type==='card'?'カード':'マネ活';
+    const delBtn=e.id?`<button class="log-del" onclick="deleteLog('${e.id}')">×</button>`:`<button class="log-del" onclick="deleteLogByIndex(${entries.indexOf(e)})">×</button>`;
+    return `<div class="log-block">
+      <div class="log-header">
+        <span class="log-date">${label}</span>
+        <span class="log-type ${tc}">${tl}</span>
+        ${delBtn}
+      </div>
+      <div class="log-lines"><div class="log-line">${e.detail}</div></div>
+    </div>`;
+  }).join(''):`<div class="prog-empty">この月の記録なし</div>`;
+
+  const paceSection=isCurrentMonth?`<div class="card"><div class="card-title">📈 ペース予測（${elapsedDays}日経過 / 残${remaining}日）</div><div class="pace-box"><div class="pace-title">この調子だと月末には…</div><div class="pace-row"><span class="pace-key">カード合計</span><span class="pace-pred">${predict(memberTotal)}枚</span></div><div class="pace-row"><span class="pace-key">ゴールド</span><span class="pace-pred">${predict(memberCards.gold)}枚</span></div><div class="pace-row"><span class="pace-key">じぶん銀行</span><span class="pace-pred">${predict(memberJibun)}件</span></div><div class="pace-row"><span class="pace-key">マネ活</span><span class="pace-pred">${predict(maneTotal)}件</span></div></div></div>`:'';
+
+  document.getElementById('page-progress').innerHTML=`
+    <div class="prog-month-nav">
+      <button class="prog-nav-btn" onclick="changeProgMonth(-1)">‹</button>
+      <button class="prog-month-btn" onclick="openYCal()">${progYear}年 ${MONTHS_JP[progMonth]} ▾</button>
+      <button class="prog-nav-btn" onclick="changeProgMonth(1)">›</button>
+    </div>
+    <select class="prog-staff-select" onchange="progMember=this.value;renderProgress()">
+      ${MEMBERS.map(m=>`<option value="${m}" ${m===progMember?'selected':''}>${m}</option>`).join('')}
+    </select>
+    <div class="card"><div class="card-title">📊 ${progMember} の月間サマリー</div>
+      <div class="ana-row"><span class="ana-label">🥈 シルバー</span><span class="ana-val">${memberCards.silver}枚</span></div>
+      <div class="ana-row"><span class="ana-label">🥇 ゴールド</span><span class="ana-val" style="color:#fbbf24">${memberCards.gold}枚</span></div>
+      <div class="ana-row"><span class="ana-label">🏦 じぶん銀行</span><span class="ana-val" style="color:#a78bfa">${memberJibun}件</span></div>
+      <div class="ana-row"><span class="ana-label">💳 機種変更マネ活</span><span class="ana-val" style="color:#38bdf8">${memberMane.kishu_got}/${memberMane.kishu_target}件</span></div>
+      <div class="ana-row"><span class="ana-label">💳 セルアップマネ活</span><span class="ana-val" style="color:#38bdf8">${memberMane.sellup_got}/${memberMane.sellup_target}件</span></div>
+    </div>
+    <div class="card"><div class="card-title">📐 分析</div>
+      <div class="ana-row"><span class="ana-label">💳 マネ活獲得率（手続き対比）</span><span class="ana-val" style="color:${manePct>=50?'#4ade80':manePct>=30?'#facc15':'#f87171'}">${manePct}%</span></div>
+      <div class="ana-row"><span class="ana-label">👥 ゴールド スタッフ内順位</span><span class="ana-val">${myRank}位${above&&diffAbove>0?` <small style="color:#94a3b8;font-size:12px">（${above.name}まで+${diffAbove}）</small>`:'<small style="color:#4ade80;font-size:12px"> トップ！</small>'}</span></div>
+      <div class="ana-row"><span class="ana-label">🏪 店舗貢献率（カード）</span><span class="ana-val">${contribCard}%</span></div>
+      <div class="ana-row"><span class="ana-label">🏪 店舗貢献率（じぶん銀行）</span><span class="ana-val">${contribJ}%</span></div>
+      <div class="ana-row"><span class="ana-label">🏪 店舗貢献率（マネ活）</span><span class="ana-val">${contribMane}%</span></div>
+    </div>
+    ${paceSection}
+    <div class="card"><div class="card-title">📅 獲得ログ（新しい順）</div>${logRows}</div>
+    <div style="height:8px"></div>`;
+}
+
+function changeProgMonth(delta){
+  progMonth+=delta;
+  if(progMonth<0){progMonth=11;progYear--;}
+  if(progMonth>11){progMonth=0;progYear++;}
+  renderProgress();
+}
+
+function openYCal(){ycalYear=progYear;renderYCal();}
+function closeYCal(){const el=document.getElementById('ycal-overlay');if(el)el.remove();}
+function renderYCal(){
+  const old=document.getElementById('ycal-overlay');if(old)old.remove();
+  const el=document.createElement('div');
+  el.id='ycal-overlay';el.className='ycal-bg';
+  el.innerHTML=`<div class="ycal"><div class="ycal-header"><button class="ycal-nav" onclick="ycalYear--;renderYCal()">‹</button><span class="ycal-year">${ycalYear}年</span><button class="ycal-nav" onclick="ycalYear++;renderYCal()">›</button></div><div class="ycal-grid">${MONTHS_JP.map((ml,mi)=>`<div class="ycal-month${ycalYear===progYear&&mi===progMonth?' active':''}" onclick="selectProgMonth(${ycalYear},${mi})">${ml}</div>`).join('')}</div><button class="ycal-close-btn" onclick="closeYCal()">閉じる</button></div>`;
+  document.body.appendChild(el);
+}
+function selectProgMonth(y,m){progYear=y;progMonth=m;closeYCal();renderProgress();}
+
+// ③旧IDなしデータも削除できる
+function deleteLog(id){
+  if(!confirm('この記録を削除しますか？'))return;
+  const db=loadDB();
+  const entry=getEntries(db).find(e=>e.id===id);
+  if(!entry){
+    // IDが見つからない＝旧データ→そのまま月データだけリセット確認
+    if(confirm('旧形式の記録です。この記録を削除しますか？\n※月の集計数値はそのままになります。')){
+      db.entries=(db.entries||[]).filter(e=>e.id!==id);
+      saveDB(db);
+      showToast('削除しました','#ef4444');
+      renderProgress();
+    }
+    return;
+  }
+  // 月データから減算
+  const[ey,em]=entry.date.split('-').map(Number);
+  const md=getMonthData(db,ey,em-1);
+  if(entry.type==='card'){
+    const sM=entry.detail.match(/S(\d+)枚/),gM=entry.detail.match(/G(\d+)枚/),jM=entry.detail.match(/じぶん銀行(\d+)件/);
+    if(sM) md.cards[entry.member].silver=Math.max(0,(md.cards[entry.member].silver||0)-parseInt(sM[1]));
+    if(gM) md.cards[entry.member].gold=Math.max(0,(md.cards[entry.member].gold||0)-parseInt(gM[1]));
+    if(jM) md.jibun[entry.member]=Math.max(0,(md.jibun[entry.member]||0)-parseInt(jM[1]));
+  } else if(entry.type==='mane'){
+    const ktM=entry.detail.match(/対象(\d+)件/),kgM=entry.detail.match(/マネ活(\d+)件/);
+    if(entry.detail.includes('機種変更')){
+      if(ktM) md.mane[entry.member].kishu_target=Math.max(0,(md.mane[entry.member].kishu_target||0)-parseInt(ktM[1]));
+      if(kgM) md.mane[entry.member].kishu_got=Math.max(0,(md.mane[entry.member].kishu_got||0)-parseInt(kgM[1]));
+    }
+    if(entry.detail.includes('セルアップ')){
+      if(ktM) md.mane[entry.member].sellup_target=Math.max(0,(md.mane[entry.member].sellup_target||0)-parseInt(ktM[1]));
+      if(kgM) md.mane[entry.member].sellup_got=Math.max(0,(md.mane[entry.member].sellup_got||0)-parseInt(kgM[1]));
+    }
+  }
+  db.entries=(db.entries||[]).filter(e=>e.id!==id);
+  saveDB(db);
+  showToast('削除しました','#ef4444');
+  renderProgress();
+}
+
+// 旧IDなしエントリーの削除（インデックスベース）
+function deleteLogByIndex(idx){
+  if(!confirm('旧形式の記録です。ログから削除しますか？\n（集計数値はそのままになります）'))return;
+  const db=loadDB();
+  if(db.entries&&db.entries[idx]!==undefined){
+    db.entries.splice(idx,1);
+    saveDB(db);
+    showToast('削除しました','#ef4444');
+    renderProgress();
+  }
+}
+
+// ══ LINE ══
+function buildLineText(targetDate){
+  const db=loadDB(),targets=loadTargets();
+  const[ty,tm]=targetDate.split('-').map(Number);
+  const md=getMonthData(db,ty,tm-1);
+  const ranked=[...MEMBERS].map(n=>({name:n,silver:md.cards[n].silver||0,gold:md.cards[n].gold||0})).sort((a,b)=>b.gold-a.gold||(b.silver-a.silver));
+  const teamS=ranked.reduce((s,r)=>s+r.silver,0),teamG=ranked.reduce((s,r)=>s+r.gold,0);
+  const teamJ=MEMBERS.reduce((s,n)=>s+(md.jibun[n]||0),0);
+  const kT=MEMBERS.reduce((s,n)=>s+(md.mane[n].kishu_target||0),0),kG=MEMBERS.reduce((s,n)=>s+(md.mane[n].kishu_got||0),0);
+  const sT=MEMBERS.reduce((s,n)=>s+(md.mane[n].sellup_target||0),0),sG=MEMBERS.reduce((s,n)=>s+(md.mane[n].sellup_got||0),0);
+  const jT2=targets.jibun||25;
+  const d=new Date(targetDate+'T00:00:00');
+  const ds=`${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
+  return [`━━━━━━━━━━━━━━━━━━━━`,`🏆 au PAY カード 獲得実績`,`　　　　　　📅 ${ds}`,`━━━━━━━━━━━━━━━━━━━━`,``,`# │ 名前 │ 🥈S │ 🥇G │ 状況`,`──────────────────────`,
+    ...ranked.map((r,i)=>{const prev=i>0?ranked[i-1].gold:-1;const rn=(i>0&&r.gold===prev)?'　':`${i+1}`;const norma=targets.personalGold?.[r.name]||5;return `${rn.padStart(2)} │ ${r.name.padEnd(3)} │  ${r.silver}  │  ${r.gold}  │ ${getEmoji(r.gold,norma)}`;}),``,
+    `━━━━━━━━━━━━━━━━━━━━`,`📊 チーム合計`,`  🥈 シルバー：${teamS}枚`,`  🥇 ゴールド：${teamG}枚`,`  🎯 TOTAL　：${teamS+teamG}枚`,``,
+    `━━━━━━━━━━━━━━━━━━━━`,`🏦 じぶん銀行`,`  チーム獲得：${teamJ}件 / 目標${jT2}件（${jT2>0?Math.round(teamJ/jT2*100):0}%）`,``,
+    `━━━━━━━━━━━━━━━━━━━━`,`💳 マネ活プラン`,`  🔄 機種変更：対象${kT}件→マネ活${kG}件（${kT===0?0:Math.round(kG/kT*100)}%）`,`  ⬆️ セルアップ：対象${sT}件→マネ活${sG}件（${sT===0?0:Math.round(sG/sT*100)}%）`,`  📌 合算：対象${kT+sT}件→マネ活${kG+sG}件（${(kT+sT)===0?0:Math.round((kG+sG)/(kT+sT)*100)}%）`,
+    `━━━━━━━━━━━━━━━━━━━━`,`今週もチーム一丸で伸ばしていこう💪🔥`,`━━━━━━━━━━━━━━━━━━━━`].join('\n');
+}
+function renderCopy(){
+  const lbl=dateToLabel(lineDate);
+  document.getElementById('page-copy').innerHTML=`
+    <div class="date-nav">
+      <button class="date-nav-btn" onclick="lineDate=prevDate(lineDate);renderCopy()">‹</button>
+      <div class="date-nav-label" onclick="openDCal('line')">${lbl.main}<small>${lbl.sub||'タップで変更'}</small></div>
+      <button class="date-nav-btn" onclick="lineDate=nextDate(lineDate);renderCopy()">›</button>
+    </div>
+    <div class="card"><div class="card-title">📋 LINE 共有テキスト</div><textarea class="line-preview" readonly>${buildLineText(lineDate)}</textarea></div>
+    <button class="copy-btn ${copyDone?'done':'idle'}" onclick="doCopy()">${copyDone?'✅ コピーしました！':'📋 LINEに貼り付け用コピー'}</button>
+    <button class="btn btn-reset" onclick="resetMonth()">🔄 今月のデータをリセット</button>
+    <div style="height:8px"></div>`;
+}
+function doCopy(){const t=buildLineText(lineDate);if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(onCopied).catch(()=>fbCopy(t));else fbCopy(t);}
+function fbCopy(t){const ta=document.createElement('textarea');ta.value=t;ta.style.cssText='position:fixed;opacity:0;top:0;left:0';document.body.appendChild(ta);ta.focus();ta.select();try{document.execCommand('copy');onCopied();}catch{}document.body.removeChild(ta);}
+function onCopied(){copyDone=true;renderCopy();setTimeout(()=>{copyDone=false;renderCopy();},2500);}
+function resetMonth(){if(!confirm('今月のデータをリセットしますか？'))return;const db=loadDB();delete db[monthKey(now.getFullYear(),now.getMonth())];saveDB(db);showToast('リセットしました','#ef4444');renderCopy();}
+
+// ══ AI分析 ══
+function calcAI(targetDate){
+  const db=loadDB(),targets=loadTargets();
+  const[ty,tm]=targetDate.split('-').map(Number);
+  const md=getMonthData(db,ty,tm-1);
+  const teamS=MEMBERS.reduce((s,n)=>s+(md.cards[n].silver||0),0);
+  const teamG=MEMBERS.reduce((s,n)=>s+(md.cards[n].gold||0),0);
+  const teamTotal=teamS+teamG;
+  const teamJ=MEMBERS.reduce((s,n)=>s+(md.jibun[n]||0),0);
+  const kTarget=MEMBERS.reduce((s,n)=>s+(md.mane[n].kishu_target||0),0);
+  const kGot=MEMBERS.reduce((s,n)=>s+(md.mane[n].kishu_got||0),0);
+  const sTarget=MEMBERS.reduce((s,n)=>s+(md.mane[n].sellup_target||0),0);
+  const sGot=MEMBERS.reduce((s,n)=>s+(md.mane[n].sellup_got||0),0);
+  const allTarget=kTarget+sTarget,allGot=kGot+sGot;
+  const jT=targets.jibun||25;
+  const totalDays=daysInMonth(ty,tm-1);
+  const isCurrentMonth=(ty===now.getFullYear()&&(tm-1)===now.getMonth());
+  const elapsed=isCurrentMonth?now.getDate():totalDays;
+
+  // スタッフ別データ
+  const staffData=MEMBERS.map(n=>{
+    const s=md.cards[n].silver||0,g=md.cards[n].gold||0,j=md.jibun[n]||0;
+    const total=s+g;
+    const mKT=md.mane[n].kishu_target||0,mKG=md.mane[n].kishu_got||0;
+    const mST=md.mane[n].sellup_target||0,mSG=md.mane[n].sellup_got||0;
+    const maneTarget=mKT+mST,maneGot=mKG+mSG;
+    const manePct=maneTarget>0?Math.round(maneGot/maneTarget*100):0;
+    const contribCard=teamTotal>0?Math.round(total/teamTotal*100):0;
+    const contribJ=teamJ>0?Math.round(j/teamJ*100):0;
+    const contribMane=allGot>0?Math.round(maneGot/allGot*100):0;
+    // MVPスコア: ゴールド40% + じぶん銀行25% + マネ活35%
+    const maxG2=Math.max(...MEMBERS.map(m=>md.cards[m].gold||0),1);
+    const maxJ=Math.max(...MEMBERS.map(m=>md.jibun[m]||0),1);
+    const scoreG=maxG2>0?(g/maxG2)*40:0;
+    const scoreJ=maxJ>0?(j/maxJ)*25:0;
+    const scoreM=(manePct/100)*35;
+    const score=Math.round(scoreG+scoreJ+scoreM);
+    // ペース予測
+    const predTotal=elapsed>0?Math.round(total/elapsed*totalDays):total;
+    const predG=elapsed>0?Math.round(g/elapsed*totalDays):g;
+    return {name:n,silver:s,gold:g,jibun:j,total,manePct,maneGot,maneTarget,
+      mKT,mKG,mST,mSG,
+      contribCard,contribJ,contribMane,score,predTotal,predG};
+  }).sort((a,b)=>b.score-a.score);
+
+  return {staffData,teamS,teamG,teamTotal,teamJ,jT,kTarget,kGot,sTarget,sGot,allTarget,allGot,elapsed,totalDays};
+}
+
+function aiCardComment(data){
+  const pct=data.contribCard;
+  const manePct=data.manePct;
+  const jComm=data.jibun>0?`じぶん銀行も${data.jibun}件獲得。`:'';
+  let cardLevel='';
+  if(pct>=35) cardLevel='カード獲得率が非常に高く、店舗実績を牽引しています。';
+  else if(pct>=25) cardLevel='カード獲得率は良好で安定した実績を残しています。';
+  else if(pct>=15) cardLevel='カード獲得は平均水準です。';
+  else cardLevel='カード獲得にさらなる伸びが期待されます。';
+  let maneLevel='';
+  if(manePct>=60) maneLevel='マネ活率も非常に強く、店舗のベンチマークスタッフです。';
+  else if(manePct>=40) maneLevel='マネ活率は平均的です。';
+  else if(manePct>0) maneLevel='マネ活率の向上が今後の課題です。';
+  return `${cardLevel} ${jComm}${maneLevel}`.trim();
+}
+
+function aiImprovements(ai){
+  const {staffData,allTarget,allGot,teamJ,jT}=ai;
+  const suggestions=[];
+  const manePct=allTarget>0?Math.round(allGot/allTarget*100):0;
+  if(manePct<40) suggestions.push({icon:'💬',text:'マネ活率が低めです。上位スタッフのトーク・提案手法をチーム内でロープレ実施することを推奨します。'});
+  else if(manePct<60) suggestions.push({icon:'📈',text:'マネ活率は改善中です。成功事例の横展開でさらなる向上が見込めます。'});
+  const jPct=jT>0?Math.round(teamJ/jT*100):0;
+  if(jPct<50) suggestions.push({icon:'🏦',text:'じぶん銀行の獲得が目標の半分以下です。獲得経験者から成功事例を共有する場を設けましょう。'});
+  const topG=staffData[0];
+  const bottomG=staffData[staffData.length-1];
+  if(topG&&bottomG&&topG.gold>0&&bottomG.gold===0) suggestions.push({icon:'🥇',text:`ゴールド獲得トップの${topG.name}さんのアプローチを未獲得スタッフへ共有することで底上げが期待できます。`});
+  const highMane=staffData.filter(s=>s.manePct>=60);
+  if(highMane.length>0&&highMane.length<MEMBERS.length) suggestions.push({icon:'🎯',text:`${highMane.map(s=>s.name).join('・')}さんのマネ活提案トークをチームで共有・標準化することを推奨します。`});
+  if(suggestions.length===0) suggestions.push({icon:'✅',text:'全体的に良好な数字が出ています。この調子で月末まで維持しましょう！'});
+  return suggestions;
+}
+
+function buildAILineText(ai,targetDate){
+  const {staffData,teamS,teamG,teamTotal,teamJ,jT,kTarget,kGot,sTarget,sGot,allTarget,allGot}=ai;
+  const mvp=staffData[0];
+  const d=new Date(targetDate+'T00:00:00');
+  const ds=`${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
+  const manePct=allTarget>0?Math.round(allGot/allTarget*100):0;
+  const jPct=jT>0?Math.round(teamJ/jT*100):0;
+  const lines=[
+    `━━━━━━━━━━━━━━━━━━━━`,
+    `📊 AI分析レポート　📅 ${ds}`,
+    `━━━━━━━━━━━━━━━━━━━━`,``,
+    `🏆 MVP：${mvp.name}さん`,
+    `　スコア：${mvp.score}pt`,
+    `　${aiCardComment(mvp)}`,``,
+    `━━━━━━━━━━━━━━━━━━━━`,
+    `📊 店舗サマリー`,
+    `  🥈 シルバー：${teamS}枚`,
+    `  🥇 ゴールド：${teamG}枚`,
+    `  🎯 TOTAL：${teamTotal}枚`,
+    `  🏦 じぶん銀行：${teamJ}件（${jPct}%）`,
+    `  💳 マネ活率：${manePct}%`,``,
+    `━━━━━━━━━━━━━━━━━━━━`,
+    `💡 改善提案`,
+    ...aiImprovements(ai).map(s=>`${s.icon} ${s.text}`),
+    `━━━━━━━━━━━━━━━━━━━━`,
+    `今週もチーム一丸で伸ばしていこう💪🔥`,
+    `━━━━━━━━━━━━━━━━━━━━`,
+  ];
+  return lines.join('\n');
+}
+
+function renderAI(){
+  const ai=calcAI(aiDate);
+  const {staffData,teamS,teamG,teamTotal,teamJ,jT,kTarget,kGot,sTarget,sGot,allTarget,allGot,elapsed,totalDays}=ai;
+  const mvp=staffData[0];
+  const manePct=allTarget>0?Math.round(allGot/allTarget*100):0;
+  const jPct=jT>0?Math.round(teamJ/jT*100):0;
+  const avgCard=MEMBERS.length>0?Math.round(teamTotal/MEMBERS.length*10)/10:0;
+  const lbl=dateToLabel(aiDate);
+  const avgMane=MEMBERS.length>0?Math.round(allGot/MEMBERS.length*10)/10:0;
+
+  // ①店舗分析
+  const shopSection=`
+    <div class="card">
+      <div class="ai-section-title">① 店舗分析</div>
+      <div class="ai-stat-grid">
+        <div class="ai-stat-item"><div class="ai-stat-val">${teamTotal}</div><div class="ai-stat-label">🎯 総カード数</div></div>
+        <div class="ai-stat-item"><div class="ai-stat-val">${teamG}</div><div class="ai-stat-label">🥇 総ゴールド</div></div>
+        <div class="ai-stat-item"><div class="ai-stat-val">${teamS}</div><div class="ai-stat-label">🥈 総シルバー</div></div>
+        <div class="ai-stat-item"><div class="ai-stat-val">${teamJ}</div><div class="ai-stat-label">🏦 じぶん銀行</div></div>
+        <div class="ai-stat-item"><div class="ai-stat-val">${allGot}</div><div class="ai-stat-label">💳 総マネ活</div></div>
+        <div class="ai-stat-item"><div class="ai-stat-val">${manePct}%</div><div class="ai-stat-label">📊 マネ活率</div></div>
+        <div class="ai-stat-item"><div class="ai-stat-val">${jPct}%</div><div class="ai-stat-label">🏦 じぶん達成率</div></div>
+        <div class="ai-stat-item"><div class="ai-stat-val">${avgCard}</div><div class="ai-stat-label">👤 平均カード数</div></div>
+      </div>
+      <div style="font-size:12px;color:#64748b;margin-top:6px">機種変更 対象${kTarget}件→マネ活${kGot}件 / セルアップ 対象${sTarget}件→マネ活${sGot}件</div>
+    </div>`;
+
+  // ②MVP
+  const mvpComment=aiCardComment(mvp);
+  const mvpSection=`
+    <div class="mvp-card">
+      <div class="ai-section-title">② MVP 自動選出</div>
+      <div class="mvp-crown">🏆</div>
+      <div class="mvp-name">${mvp.name}</div>
+      <div class="mvp-score">総合スコア ${mvp.score}pt（🥇×40% ＋ 🏦×25% ＋ 💳×35%）</div>
+      <div class="mvp-comment">${mvpComment}</div>
+    </div>`;
+
+  // ③個人分析
+  const memberCards=staffData.map((s,i)=>{
+    const cardLevel=s.contribCard>=35?'非常に優秀':s.contribCard>=25?'良好':s.contribCard>=15?'平均':'改善余地あり';
+    const maneLevel=s.manePct>=60?'強み':s.manePct>=40?'平均':'要改善';
+    const jibunLevel=jT>0&&s.jibun/(jT/MEMBERS.length)>=0.8?'達成目前':jT>0&&s.jibun/(jT/MEMBERS.length)>=0.5?'順調':'巻き返し必要';
+    const above=i>0?staffData[i-1]:null;
+    const diffAbove=above?above.score-s.score:0;
+    const cardColor=s.contribCard>=35?'#4ade80':s.contribCard>=25?'#facc15':s.contribCard>=15?'#94a3b8':'#f87171';
+    const maneColor=s.manePct>=60?'#4ade80':s.manePct>=40?'#facc15':'#f87171';
+    const kishuPct=s.maneTarget>0?Math.round((s.mKG||0)/(s.mKT||1)*100):0;
+    const sellupPct=s.maneTarget>0?Math.round((s.mSG||0)/(s.mST||1)*100):0;
+    return `<div class="ai-member-card">
+      <div class="ai-member-head">
+        <span class="ai-member-name">${i===0?'🏆 ':i===1?'🥈 ':i===2?'🥉 ':''}${s.name}</span>
+        <span class="ai-member-rank">スコア ${s.score}pt${above&&diffAbove>0?` / ${above.name}まで-${diffAbove}`:i===0?' / トップ':''}</span>
+      </div>
+      <div class="ai-member-stats">
+        <span class="ai-member-badge" style="background:rgba(251,191,36,.2);color:#fbbf24">🥇${s.gold} 🥈${s.silver}</span>
+        <span class="ai-member-badge" style="background:rgba(99,102,241,.2);color:#a78bfa">🏦${s.jibun}件</span>
+        <span class="ai-member-badge" style="background:rgba(8,145,178,.2);color:#38bdf8">マネ活${s.manePct}%</span>
+        <span class="ai-member-badge" style="background:rgba(34,197,94,.15);color:#4ade80">貢献${s.contribCard}%</span>
+      </div>
+      <div style="font-size:12px;color:#64748b;margin-bottom:4px">
+        🔄 機種変更：${s.mKG||0}/${s.mKT||0}件　⬆️ セルアップ：${s.mSG||0}/${s.mST||0}件
+      </div>
+      <div style="font-size:12px;color:#64748b;margin-bottom:6px">月末予測：カード${s.predTotal}枚 / ゴールド${s.predG}枚（${elapsed}日経過）</div>
+      <div class="ai-comment">
+        カード率：<span style="color:${cardColor}">${cardLevel}</span>　
+        マネ活：<span style="color:${maneColor}">${maneLevel}</span>　
+        じぶん銀行：<span style="color:#94a3b8">${jibunLevel}</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  // ④改善提案
+  const improvements=aiImprovements(ai);
+  const improveSection=`
+    <div class="card">
+      <div class="ai-section-title">④ 店舗改善提案</div>
+      ${improvements.map(s=>`<div class="improve-item"><span class="improve-icon">${s.icon}</span><span class="improve-text">${s.text}</span></div>`).join('')}
+    </div>`;
+
+  // ⑤ゲーミフィケーション
+  const fastGrow=staffData.slice().sort((a,b)=>b.predG-a.predG)[0];
+  const topMane=staffData.slice().sort((a,b)=>b.manePct-a.manePct)[0];
+  const nearGoal=staffData.find(s=>s.contribCard>0&&s.contribCard<35);
+  const gameSection=`
+    <div class="card">
+      <div class="ai-section-title">⑤ ゲーミフィケーション</div>
+      <div class="game-item"><span class="game-icon">🔥</span><div class="game-content"><div class="game-label">急成長スタッフ</div><div class="game-val">${fastGrow.name}（月末予測 G${fastGrow.predG}枚）</div></div></div>
+      <div class="game-item"><span class="game-icon">💳</span><div class="game-content"><div class="game-label">マネ活トップ</div><div class="game-val">${topMane.name}（${topMane.manePct}%）</div></div></div>
+      <div class="game-item"><span class="game-icon">🏆</span><div class="game-content"><div class="game-label">月間MVP</div><div class="game-val">${mvp.name}（スコア ${mvp.score}pt）</div></div></div>
+      ${nearGoal?`<div class="game-item"><span class="game-icon">⚡</span><div class="game-content"><div class="game-label">あと一歩！</div><div class="game-val">${nearGoal.name}（貢献率あと${35-nearGoal.contribCard}%で優秀圏）</div></div></div>`:''}
+    </div>`;
+
+  document.getElementById('page-ai').innerHTML=`
+    <div class="date-nav">
+      <button class="date-nav-btn" onclick="aiDate=prevDate(aiDate);renderAI()">‹</button>
+      <div class="date-nav-label" onclick="openDCal('ai')">${lbl.main}<small>${lbl.sub||'タップで変更'}</small></div>
+      <button class="date-nav-btn" onclick="aiDate=nextDate(aiDate);renderAI()">›</button>
+    </div>
+    ${shopSection}
+    ${mvpSection}
+    <div class="card">
+      <div class="ai-section-title">③ 個人分析（スコア順）</div>
+      ${memberCards}
+    </div>
+    ${improveSection}
+    ${gameSection}
+    <button class="ai-copy-btn" onclick="copyAILine()">📋 AI分析をLINEにコピー</button>
+    <div style="height:80px"></div>`;
+}
+
+function copyAILine(){
+  const ai=calcAI(aiDate);
+  const text=buildAILineText(ai,aiDate);
+  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(()=>showToast('AI分析をコピーしました ✓','#06c755')).catch(()=>fbCopyAI(text));
+  else fbCopyAI(text);
+}
+function fbCopyAI(text){
+  const ta=document.createElement('textarea');ta.value=text;ta.style.cssText='position:fixed;opacity:0;top:0;left:0';
+  document.body.appendChild(ta);ta.focus();ta.select();
+  try{document.execCommand('copy');showToast('AI分析をコピーしました ✓','#06c755');}catch{}
+  document.body.removeChild(ta);
+}
+
+// ══ SETTINGS ══
+function renderSettings(){
+  const t=loadTargets();
+  const members=loadMembers();
+
+  const memberRows=members.map((m,i)=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid rgba(99,102,241,.1);">
+      <input type="text" class="member-name-input" data-idx="${i}" value="${m}"
+        style="flex:1;padding:8px 10px;border-radius:8px;background:#0f172a;border:1px solid #334155;color:#e2e8f0;font-size:14px;">
+      <button onclick="delMemberSetting(${i})"
+        style="background:none;border:none;color:#ef4444;font-size:18px;cursor:pointer;padding:0 4px;flex-shrink:0;">×</button>
+    </div>`).join('');
+
+  const normaRows=members.map(m=>`
+    <div class="set-row">
+      <span class="set-label">${m}</span>
+      <input type="number" class="set-input norma-input" data-member="${m}"
+        value="${t.personalGold?.[m]??5}" min="0" inputmode="numeric">
+      <span style="font-size:12px;color:#64748b;margin-left:4px">枚</span>
+    </div>`).join('');
+
+  document.getElementById('page-settings').innerHTML=`
+    <div class="card">
+      <div class="card-title">👤 スタッフ管理</div>
+      <div id="member-list">${memberRows}</div>
+      <button onclick="addMemberSetting()"
+        style="width:100%;margin-top:8px;padding:10px;border-radius:10px;border:1px dashed #334155;background:none;color:#64748b;font-size:13px;cursor:pointer;">
+        ＋ スタッフを追加
+      </button>
+    </div>
+    <div class="card">
+      <div class="card-title">🎯 個人ノルマ設定（ゴールド枚数）</div>
+      ${normaRows}
+    </div>
+    <div class="card">
+      <div class="card-title">🏦 じぶん銀行 チーム目標</div>
+      <div class="set-row">
+        <span class="set-label">チーム目標</span>
+        <input type="number" class="set-input" id="set-jibun" value="${t.jibun||25}" inputmode="numeric" min="0">
+        <span style="font-size:12px;color:#64748b;margin-left:4px">件</span>
+      </div>
+    </div>
+    <button class="btn btn-primary" style="margin-top:4px" onclick="saveAllSettings()">保存</button>
+    <div style="height:80px"></div>`;
+}
+
+function addMemberSetting(){
+  const members=loadMembers();
+  members.push('新スタッフ');
+  saveMembers(members);
+  MEMBERS=members;
+  renderSettings();
+}
+function delMemberSetting(i){
+  const members=loadMembers();
+  members.splice(i,1);
+  saveMembers(members);
+  MEMBERS=members;
+  renderSettings();
+}
+function saveAllSettings(){
+  // スタッフ名保存
+  const newMembers=[];
+  document.querySelectorAll('.member-name-input').forEach(el=>{
+    const v=el.value.trim();
+    if(v) newMembers.push(v);
+  });
+  saveMembers(newMembers);
+  MEMBERS=newMembers;
+
+  // ノルマ保存
+  const t=loadTargets();
+  if(!t.personalGold) t.personalGold={};
+  document.querySelectorAll('.norma-input').forEach(el=>{
+    const m=el.dataset.member;
+    t.personalGold[m]=parseInt(el.value)||0;
+  });
+
+  // じぶん銀行目標
+  const j=document.getElementById('set-jibun');
+  if(j) t.jibun=parseInt(j.value)||25;
+
+  saveTargets(t);
+  showToast('設定を保存しました ✓','#22c55e');
+  renderSettings();
+}
+
+function prevDate(dateStr){const d=new Date(dateStr+'T00:00:00');d.setDate(d.getDate()-1);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function nextDate(dateStr){const d=new Date(dateStr+'T00:00:00');d.setDate(d.getDate()+1);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+
+function showToast(msg,color='#4f46e5'){
+  const old=document.getElementById('toast-el');if(old)old.remove();
+  const t=document.createElement('div');t.id='toast-el';t.className='toast';t.style.background=color;t.textContent=msg;
+  document.body.appendChild(t);setTimeout(()=>t.remove(),2000);
+}
+
+updateHeader();
+renderRanking();
+</script>
+</body>
+</html>
